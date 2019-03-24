@@ -1,0 +1,72 @@
+#! /usr/bin/python
+from logging import getLogger, ERROR
+getLogger("scapy.runtime").setLevel(ERROR)
+from scapy.all import *
+import sys
+from datetime import datetime
+from time import strftime
+
+def checkhost(ip):
+    conf.verb = 0
+    try:
+        ping = sr1(IP(dst = ip)/ICMP())
+        print "\n[*] Target is Up, Beginning Scan"
+    except Exception:
+        print "\n[!] Couldn't resolve host, did you enter the correct ip?"
+        print "[!] Exiting"
+        sys.exit(1)
+
+def scanport(port):
+    #print "Scanning Port: " + str(port)
+    srcport = RandShort()
+    conf.verb = 0
+    SYNACKpkt = IP(dst = targetIP)/TCP(sport = srcport, dport = port, flags = "S")
+    resp = sr1(SYNACKpkt, timeout=1)
+    if str(type(resp)) == "<type 'NoneType'>":
+        return False
+    pktFlags = SYNACKpkt.getlayer(TCP).flags
+    if pktFlags == SYNACK:
+        return True
+    else:
+        return False
+    RSTpkt = IP(dst = targetIP)/TCP(sport = srcport, dport = port, flags = "R")
+    send(RSTpkt)
+
+try:
+    targetIP = raw_input("[*] Enter Target IP AddresS: ")
+    minPort = raw_input("[*] Enter Minimun Port in Range: ")
+    maxPort = raw_input("[*] Enter Maximun Port in Range: ")
+    try:
+        if int(minPort) >= 0 and int(maxPort) >= 0 and int(maxPort) >= int(minPort):
+            pass
+        else:
+            print "\n[!] Invalid Port Range (nan or min is bigger than max)"
+            print "Qutting out"
+            sys.exit(1)
+    except Exception:
+        print "\n[!] Invalid Port Range"
+        print "[!] Quitting out"
+        sys.exit(1)
+
+    ports = range(int(minPort), int(maxPort)+1)
+    startClock = datetime.now()
+    SYNACK = 0x12
+    RSTACK = 0x14
+
+    #checkhost(targetIP)
+    print "[*] Scan Started at " + strftime("%H:%M:%S") + "!\n"
+
+    for port in ports:
+        status = scanport(port)
+        if status:
+            print "Port " + str(port) + ": Open"
+
+    stopClock = datetime.now()
+    totalTime = stopClock - startClock
+    print "\n[*] Scanning Finished!"
+    print "[*] Total Scan Duration: " + str(totalTime)
+
+except KeyboardInterrupt:
+    print "\n[*] User Interrupt"
+    print "[*] Quitting out"
+    sys.exit(1)
