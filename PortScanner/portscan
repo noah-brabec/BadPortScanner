@@ -25,12 +25,12 @@ def scanport(port, targetIPIn):
     SYNACKpkt = IP(dst = targetIPIn)/TCP(sport = srcport, dport = port, flags = "S")
     resp = sr1(SYNACKpkt, timeout=1)
     if str(type(resp)) == "<type 'NoneType'>":
-        return False
+        return (False, None)
     pktFlags = SYNACKpkt.getlayer(TCP).flags
     if pktFlags == SYNACK:
-        return True
+        return (True, resp)
     else:
-        return False
+        return (False, None)
     RSTpkt = IP(dst = targetIPIN)/TCP(sport = srcport, dport = port, flags = "R")
     send(RSTpkt)
 
@@ -57,9 +57,10 @@ def scan_ip(targetIPIn):
     print "[*] Scan Started at " + strftime("%H:%M:%S") + "!\n"
 
     for port in ports:
-        status = scanport(port, targetIPIn)
-        if status:
+        status, pkt = scanport(port, targetIPIn)
+        if status and pkt is not None:
             print "Port " + str(port) + ": Open"
+            print("Packet Information:", str(type(resp)))
 
     stopClock = datetime.now()
     totalTime = stopClock - startClock
