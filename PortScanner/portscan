@@ -87,6 +87,15 @@ try:
             scan_ip(ip)
         print "[*] Total Scan Duration: " + str(totalTime)
         sys.exit(0)
+    elif len(argv) == 2:
+        # assume second argument is an IP
+        minPort = raw_input("[*] Enter Minimun Port in Range: ")
+        maxPort = raw_input("[*] Enter Maximun Port in Range: ")
+        check_ports(minPort, maxPort)
+        scan_ip(argv[1])
+        print "[*] Total Scan Duration: " + str(totalTime)
+        sys.exit(0)
+
 
 
     targetIP = raw_input("[*] Enter Target IP AddresS: ")
