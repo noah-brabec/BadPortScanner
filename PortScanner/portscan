@@ -7,7 +7,7 @@ from datetime import datetime
 from time import strftime
 
 argv = sys.argv
-
+print(len(argv))
 def checkhost(ip):
     conf.verb = 0
     try:
@@ -65,15 +65,28 @@ def scan_ip(targetIPIn):
     totalTime = stopClock - startClock
     print "\n[*] Scanning Finished!"
 
+def populate_list(file_name):
+    ret_list = []
+    with open(file_name, 'r') as f:
+        for line in f:
+            ret_list.append(line[:-1])
+    return ret_list
+
 try:
     if len(argv) == 3 and argv[1] == "-f":
+        print("well done")
         file_name = argv[2]
-        ip_list = []
+        ip_list = populate_list(file_name)
+
         # TODO: Import ip from list into ip_list
         minPort = raw_input("[*] Enter Minimun Port in Range: ")
         maxPort = raw_input("[*] Enter Maximun Port in Range: ")
         # TODO: Call portscanning function for each ip
         check_ports(minPort, maxPort)
+        for ip in ip_list:
+            scan_ip(ip)
+        print "[*] Total Scan Duration: " + str(totalTime)
+        sys.exit(0)
 
 
     targetIP = raw_input("[*] Enter Target IP AddresS: ")
@@ -84,7 +97,7 @@ try:
 
     scan_ip(targetIP)
 
-    print "[*] Total Scan Duration: " + str(totalTime)
+
 
 except KeyboardInterrupt:
     print "\n[*] User Interrupt"
