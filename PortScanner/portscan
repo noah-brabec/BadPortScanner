@@ -27,15 +27,12 @@ def scanport(port):
     pktFlags = SYNACKpkt.getlayer(TCP).flags
     if pktFlags == SYNACK:
         return True
-    else:
+    else:,flags="S"
         return False
     RSTpkt = IP(dst = targetIP)/TCP(sport = srcport, dport = port, flags = "R")
     send(RSTpkt)
 
-try:
-    targetIP = raw_input("[*] Enter Target IP AddresS: ")
-    minPort = raw_input("[*] Enter Minimun Port in Range: ")
-    maxPort = raw_input("[*] Enter Maximun Port in Range: ")
+def check_ports(minPortIn:int, maxPortIn:int):
     try:
         if int(minPort) >= 0 and int(maxPort) >= 0 and int(maxPort) >= int(minPort):
             pass
@@ -47,6 +44,20 @@ try:
         print "\n[!] Invalid Port Range"
         print "[!] Quitting out"
         sys.exit(1)
+
+try:
+    if leng(argv) == 3 and argv[1] == "-f":
+        file_name = argv[2]
+        ip_list = []
+        # TODO: Import ip from list into ip_list
+        minPort = raw_input("[*] Enter Minimun Port in Range: ")
+        maxPort = raw_input("[*] Enter Maximun Port in Range: ")
+        # TODO: Call portscanning function for each ip
+
+    targetIP = raw_input("[*] Enter Target IP AddresS: ")
+    minPort = raw_input("[*] Enter Minimun Port in Range: ")
+    maxPort = raw_input("[*] Enter Maximun Port in Range: ")
+
 
     ports = range(int(minPort), int(maxPort)+1)
     startClock = datetime.now()
