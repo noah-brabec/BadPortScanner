@@ -6,11 +6,10 @@ import sys
 from datetime import datetime
 from time import strftime
 
-argv = sys.argv
-print(len(argv))
 def checkhost(ip):
     conf.verb = 0
     try:
+        #ping the host to see if its alive
         ping = sr1(IP(dst = ip)/ICMP())
         print "\n[*] Target is Up, Beginning Scan"
     except Exception:
@@ -18,23 +17,32 @@ def checkhost(ip):
         print "[!] Exiting"
         sys.exit(1)
 
-def scanport(port, targetIPIn):
+def scanport(port):
     #print "Scanning Port: " + str(port)
     srcport = RandShort()
     conf.verb = 0
-    SYNACKpkt = IP(dst = targetIPIn)/TCP(sport = srcport, dport = port, flags = "S")
+    #Generates packet to send
+    SYNACKpkt = IP(dst = targetIP)/TCP(sport = srcport, dport = port, flags = "S")
+    #Send pkt, and will skip after a second if we hear no response
     resp = sr1(SYNACKpkt, timeout=1)
+    #Checks if we actually have an object
     if str(type(resp)) == "<type 'NoneType'>":
-        return (False, None)
+        return False
+    #If we've made it here we know that there is going to be a packet
     pktFlags = SYNACKpkt.getlayer(TCP).flags
+    #Makes sure the flags match, ie had a tcp layer
     if pktFlags == SYNACK:
-        return (True, resp)
+        return True
     else:
-        return (False, None)
-    RSTpkt = IP(dst = targetIPIN)/TCP(sport = srcport, dport = port, flags = "R")
+        return False
+    #Sends a rst packet as to avoid firewalls and be a little sneakier
+    RSTpkt = IP(dst = targetIP)/TCP(sport = srcport, dport = port, flags = "R")
     send(RSTpkt)
 
-def check_ports(minPortIn, maxPortIn):
+try:
+    targetIP = raw_input("[*] Enter Target IP AddresS: ")
+    minPort = raw_input("[*] Enter Minimun Port in Range: ")
+    maxPort = raw_input("[*] Enter Maximun Port in Range: ")
     try:
         if int(minPort) >= 0 and int(maxPort) >= 0 and int(maxPort) >= int(minPort):
             pass
@@ -47,7 +55,6 @@ def check_ports(minPortIn, maxPortIn):
         print "[!] Quitting out"
         sys.exit(1)
 
-def scan_ip(targetIPIn):
     ports = range(int(minPort), int(maxPort)+1)
     startClock = datetime.now()
     SYNACK = 0x12
@@ -57,57 +64,14 @@ def scan_ip(targetIPIn):
     print "[*] Scan Started at " + strftime("%H:%M:%S") + "!\n"
 
     for port in ports:
-        status, pkt = scanport(port, targetIPIn)
-        if status and pkt is not None:
+        status = scanport(port)
+        if status:
             print "Port " + str(port) + ": Open"
-            print("Packet Information:", str(type(resp)))
 
     stopClock = datetime.now()
     totalTime = stopClock - startClock
     print "\n[*] Scanning Finished!"
-
-def populate_list(file_name):
-    ret_list = []
-    with open(file_name, 'r') as f:
-        for line in f:
-            ret_list.append(line[:-1])
-    return ret_list
-
-try:
-    if len(argv) == 3 and argv[1] == "-f":
-        print("well done")
-        file_name = argv[2]
-        ip_list = populate_list(file_name)
-
-        # TODO: Import ip from list into ip_list
-        minPort = raw_input("[*] Enter Minimun Port in Range: ")
-        maxPort = raw_input("[*] Enter Maximun Port in Range: ")
-        # TODO: Call portscanning function for each ip
-        check_ports(minPort, maxPort)
-        for ip in ip_list:
-            scan_ip(ip)
-        print "[*] Total Scan Duration: " + str(totalTime)
-        sys.exit(0)
-    elif len(argv) == 2:
-        # assume second argument is an IP
-        minPort = raw_input("[*] Enter Minimun Port in Range: ")
-        maxPort = raw_input("[*] Enter Maximun Port in Range: ")
-        check_ports(minPort, maxPort)
-        scan_ip(argv[1])
-        print "[*] Total Scan Duration: " + str(totalTime)
-        sys.exit(0)
-
-
-
-    targetIP = raw_input("[*] Enter Target IP AddresS: ")
-    minPort = raw_input("[*] Enter Minimun Port in Range: ")
-    maxPort = raw_input("[*] Enter Maximun Port in Range: ")
-
-    check_ports(minPort, maxPort)
-
-    scan_ip(targetIP)
-
-
+    print "[*] Total Scan Duration: " + str(totalTime)
 
 except KeyboardInterrupt:
     print "\n[*] User Interrupt"
